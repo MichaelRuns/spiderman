@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# uv
+uv.lock.tmp
+
+# Node / JS (for the future web/ tooling)
+node_modules/
+dist/
+.env
+
+# Trained weights are large binaries — export/publish deliberately
+web/weights/*
+!web/weights/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
