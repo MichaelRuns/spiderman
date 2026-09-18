@@ -133,7 +133,7 @@ class MultiHeadSelfAttention(nn.Module):
         if token_positions is None:
             token_positions = torch.arange(x.shape[-2], device=x.device)
         seq_len = x.shape[-2]
-        mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device))
+        mask = torch.tril(torch.ones(seq_len, seq_len, device=x.device, dtype=torch.bool))
         # forward passes
         Q = self.WQ(x)
         K = self.WK(x)
