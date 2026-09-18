@@ -21,9 +21,21 @@ export abstract class LayerModule {
     }
   }
 
-  /** Snapshot of the tensors recorded during this module's last forward call. */
+  /**
+   * Snapshot of the tensors recorded during this module's last forward call.
+   * Returned by reference — the next `forward()` call mutates this same
+   * object's entries in place. Capturing state across multiple steps (e.g.
+   * one snapshot per generated token, for later animated replay) must use
+   * `cloneState()` instead, or every captured "step" ends up aliasing the
+   * same, final-step object.
+   */
   getState(): Readonly<Record<string, TensorSnapshot>> {
     return this.lastState;
+  }
+
+  /** A point-in-time copy of `getState()`, safe to hold onto across later forward calls. */
+  cloneState(): Record<string, TensorSnapshot> {
+    return { ...this.lastState };
   }
 
   /** Load this module's parameters (and any submodules') from a state dict. */

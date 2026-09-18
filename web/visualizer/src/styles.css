@@ -1,0 +1,133 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: #0b0d12;
+  color: #e6e8ee;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: #9aa1b0;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.prompt-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prompt-input textarea {
+  font: inherit;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #2a2e3a;
+  background: #14161d;
+  color: inherit;
+  resize: vertical;
+}
+
+.prompt-input button {
+  align-self: flex-start;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  background: #5b6cff;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prompt-input button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hyperparams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.hyperparams label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #c3c7d3;
+  min-width: 160px;
+}
+
+.output pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #14161d;
+  border: 1px solid #2a2e3a;
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 4rem;
+  font-family: ui-monospace, monospace;
+}
+
+.perf-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.perf-stats div {
+  background: #14161d;
+  border: 1px solid #2a2e3a;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.perf-stats dt {
+  font-size: 0.72rem;
+  color: #9aa1b0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.perf-stats dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+.scene-container {
+  height: 560px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #2a2e3a;
+}
+
+.playback-position {
+  align-self: center;
+  color: #9aa1b0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}

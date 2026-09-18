@@ -3,6 +3,8 @@ export {
   add,
   arangeArray,
   causalMask,
+  causalMaskWithCache,
+  concatAxis,
   div,
   gather,
   matmul,
@@ -26,6 +28,11 @@ export { snapshot } from "./state.js";
 export type { TensorSnapshot } from "./state.js";
 export { paramArray, stateDictFromBinary, stateDictFromJSON } from "./weights.js";
 export type { StateDict, WeightsManifest } from "./weights.js";
+export { KVCache } from "./kvcache.js";
+export type { LayerKVCache } from "./kvcache.js";
+export { sampleToken } from "./sampling.js";
+export type { SamplingOptions } from "./sampling.js";
+export { Tokenizer } from "./tokenizer.js";
 
 export { LayerModule } from "./modules/module.js";
 export { Linear } from "./modules/linear.js";
