@@ -40,9 +40,14 @@ def scaled_dot_product_attention(Q: torch.Tensor, K: torch.Tensor, V: torch.Tens
 class Linear(nn.Module):
     def __init__(self, in_features: int, out_features: int, device=None, dtype=None):
         super().__init__()
+        std = (2.0 / (in_features + out_features)) ** 0.5
         self.weight = torch.nn.Parameter(
             torch.nn.init.trunc_normal_(
                 torch.empty(out_features, in_features, device=device, dtype=dtype),
+                mean=0.0,
+                std=std,
+                a=-3 * std,
+                b=3 * std,
             )
         )
 
@@ -55,6 +60,10 @@ class Embedding(nn.Module):
         self.weight = torch.nn.Parameter(
             torch.nn.init.trunc_normal_(
                 torch.empty(num_embeddings, embedding_dim, device=device, dtype=dtype),
+                mean=0.0,
+                std=1.0,
+                a=-3.0,
+                b=3.0,
             )
         )
 

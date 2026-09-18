@@ -8,14 +8,21 @@ __pycache__/
 # uv
 uv.lock.tmp
 
+# Raw/intermediate training data and checkpoints — large, reproducible from a
+# data source + training script, not repo content.
+llm/data/*
+!llm/data/.gitkeep
+llm/checkpoints/
+
 # Node / JS (for the future web/ tooling)
 node_modules/
 dist/
 .env
 
-# Trained weights are large binaries — export/publish deliberately
-web/weights/*
-!web/weights/.gitkeep
+# web/weights/ *is* tracked — it's the exported, deployable weights.bin +
+# manifest.json + vocab/merges that GitHub Pages serves to the visualizer,
+# and stays small (a few MB) by design. Only the training-only intermediates
+# above (checkpoints with optimizer state, raw corpora) are excluded.
 
 # OS / editor
 .DS_Store

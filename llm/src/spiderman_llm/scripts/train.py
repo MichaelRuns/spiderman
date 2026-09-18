@@ -71,12 +71,13 @@ def lr_cosine_schedule(
     return min_lr + 0.5 * (1 + math.cos(math.pi * progress)) * (max_lr - min_lr)
 
 
-def save_checkpoint(model, optimizer, iteration: int, path: Path) -> None:
+def save_checkpoint(model, optimizer, iteration: int, config: dict, path: Path) -> None:
     torch.save(
         {
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "iteration": iteration,
+            "config": config,
         },
         path,
     )
@@ -162,15 +163,16 @@ def main() -> None:
         train_data, val_data = data, data
 
     vocab_size = max(tokenizer.vocab) + 1
-    model = TransformerLM(
-        vocab_size=vocab_size,
-        context_length=args.context_length,
-        d_model=args.d_model,
-        num_layers=args.num_layers,
-        num_heads=args.num_heads,
-        d_ff=args.d_ff,
-        theta=args.rope_theta,
-    ).to(device)
+    model_config = {
+        "vocab_size": vocab_size,
+        "context_length": args.context_length,
+        "d_model": args.d_model,
+        "num_layers": args.num_layers,
+        "num_heads": args.num_heads,
+        "d_ff": args.d_ff,
+        "theta": args.rope_theta,
+    }
+    model = TransformerLM(**model_config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.max_lr, weight_decay=args.weight_decay)
 
     start_iter = 0
@@ -204,9 +206,9 @@ def main() -> None:
             print(f"iter {it:6d} | val_loss {val_loss:.4f}")
 
         if it % args.checkpoint_every == 0 and it > start_iter:
-            save_checkpoint(model, optimizer, it, args.checkpoint_dir / f"ckpt_{it}.pt")
+            save_checkpoint(model, optimizer, it, model_config, args.checkpoint_dir / f"ckpt_{it}.pt")
 
-    save_checkpoint(model, optimizer, args.max_iters - 1, args.checkpoint_dir / "ckpt_final.pt")
+    save_checkpoint(model, optimizer, args.max_iters - 1, model_config, args.checkpoint_dir / "ckpt_final.pt")
     print(f"Saved final checkpoint to {args.checkpoint_dir / 'ckpt_final.pt'}")
 
 
