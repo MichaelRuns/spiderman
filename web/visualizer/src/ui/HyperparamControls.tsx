@@ -2,6 +2,8 @@ export interface Hyperparams {
   maxNewTokens: number;
   temperature: number;
   topK: number;
+  /** Floor on how long each token takes to appear in the UI — real compute (often a few ms) is paced up to this, so generation stays watchable. Doesn't affect the measured perf stats, which reflect real compute time. */
+  minMsPerToken: number;
 }
 
 interface HyperparamControlsProps {
@@ -47,6 +49,18 @@ export function HyperparamControls({ value, onChange, maxAllowedNewTokens, disab
           max={50}
           value={value.topK}
           onChange={(e) => set("topK", Number(e.target.value))}
+          disabled={disabled}
+        />
+      </label>
+      <label>
+        Min ms/token: {value.minMsPerToken === 0 ? "off (as fast as possible)" : value.minMsPerToken}
+        <input
+          type="range"
+          min={0}
+          max={300}
+          step={10}
+          value={value.minMsPerToken}
+          onChange={(e) => set("minMsPerToken", Number(e.target.value))}
           disabled={disabled}
         />
       </label>

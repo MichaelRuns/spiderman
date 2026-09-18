@@ -10,12 +10,23 @@ body {
 }
 
 .app {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.section-hint {
+  color: #9aa1b0;
+  font-size: 0.8rem;
+  margin: -0.25rem 0 0.6rem;
 }
 
 h1 {
@@ -29,23 +40,28 @@ h1 {
   font-size: 0.9rem;
 }
 
-.prompt-input {
+.unified-input {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  background: #14161d;
+  border: 1px solid #2a2e3a;
+  border-radius: 8px;
+  padding: 0.75rem;
 }
 
-.prompt-input textarea {
+.unified-input textarea {
   font: inherit;
-  padding: 0.75rem;
-  border-radius: 8px;
+  font-family: ui-monospace, monospace;
+  padding: 0.5rem;
+  border-radius: 6px;
   border: 1px solid #2a2e3a;
-  background: #14161d;
+  background: #0b0d12;
   color: inherit;
   resize: vertical;
 }
 
-.prompt-input button {
+.unified-input > button {
   align-self: flex-start;
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
@@ -56,7 +72,7 @@ h1 {
   cursor: pointer;
 }
 
-.prompt-input button:disabled {
+.unified-input > button:disabled {
   opacity: 0.6;
   cursor: default;
 }
@@ -76,15 +92,155 @@ h1 {
   min-width: 160px;
 }
 
-.output pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: #14161d;
-  border: 1px solid #2a2e3a;
-  border-radius: 8px;
-  padding: 1rem;
-  min-height: 4rem;
+.token-strip {
+  border-top: 1px solid #2a2e3a;
+  padding-top: 0.5rem;
+}
+
+.token-strip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.token-strip-count {
+  font-size: 0.75rem;
+  color: #6c7280;
+}
+
+.token-strip-empty,
+.ranking-empty {
+  color: #6c7280;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.token-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
   font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+}
+
+.token-chip {
+  /* background-color set inline per token id (see tokenColors.ts) — every rule
+     here avoids touching `background`/`background-color` so that stays put. */
+  border: 1px solid transparent;
+  color: inherit;
+  padding: 0.05rem 0.15rem;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: pre;
+  font: inherit;
+}
+
+.token-chip:hover {
+  border-color: #c3c7d3;
+}
+
+.token-chip.selected {
+  outline: 2px solid #5b6cff;
+  outline-offset: 1px;
+}
+
+.token-chip.preview {
+  cursor: default;
+}
+
+.follow-latest-button {
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #3a3f4e;
+  background: transparent;
+  color: #c3c7d3;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.next-token-ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 52px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.ranking-row.selected {
+  background: rgba(91, 108, 255, 0.18);
+  outline: 1px solid #5b6cff;
+}
+
+.ranking-token {
+  font-family: ui-monospace, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-bar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #14161d;
+  overflow: hidden;
+}
+
+.ranking-bar {
+  display: block;
+  height: 100%;
+  background: #5b6cff;
+}
+
+.ranking-prob {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #9aa1b0;
+}
+
+.architecture {
+  overflow-x: auto;
+}
+
+.layer-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.layer-tab {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #2a2e3a;
+  background: #14161d;
+  color: #c3c7d3;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.layer-tab.active {
+  background: #5b6cff;
+  border-color: #5b6cff;
+  color: white;
+}
+
+.layer-tabs-note {
+  color: #6c7280;
+  font-size: 0.78rem;
+  margin-left: 0.4rem;
 }
 
 .perf-stats {
@@ -116,18 +272,4 @@ h1 {
 
 .error {
   color: #ff6b6b;
-}
-
-.scene-container {
-  height: 560px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #2a2e3a;
-}
-
-.playback-position {
-  align-self: center;
-  color: #9aa1b0;
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
 }
