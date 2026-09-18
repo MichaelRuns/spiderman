@@ -28,3 +28,38 @@ export function stateDictFromJSON(raw: Record<string, { shape: number[]; data: n
   }
   return stateDict;
 }
+
+/**
+ * The manifest half of the binary export format written by
+ * `llm/src/spiderman_llm/scripts/export_weights.py`: `weights.bin` (raw,
+ * concatenated float32 bytes) plus this JSON index of where each tensor
+ * lives in it. Deployed as `weights.bin` + `manifest.json` under
+ * `web/weights/`.
+ */
+export interface WeightsManifest {
+  config: {
+    vocabSize: number;
+    contextLength: number;
+    dModel: number;
+    numLayers: number;
+    numHeads: number;
+    dFF: number;
+    ropeTheta: number;
+  };
+  specialTokens: string[];
+  tensors: Record<string, { shape: number[]; byteOffset: number; byteLength: number }>;
+}
+
+/**
+ * Build a StateDict from `weights.bin`'s ArrayBuffer by slicing a Float32Array
+ * view per tensor at the manifest's recorded offsets — no copy beyond the
+ * fetch itself (every offset is a multiple of 4 because every tensor's byte
+ * length is, so alignment always holds).
+ */
+export function stateDictFromBinary(manifest: WeightsManifest, buffer: ArrayBuffer): StateDict {
+  const stateDict: StateDict = {};
+  for (const [key, { shape, byteOffset, byteLength }] of Object.entries(manifest.tensors)) {
+    stateDict[key] = { shape, data: new Float32Array(buffer, byteOffset, byteLength / 4) };
+  }
+  return stateDict;
+}

@@ -24,8 +24,8 @@ export { scaledDotProductAttention, silu, softmax } from "./functions.js";
 export type { AttentionResult } from "./functions.js";
 export { snapshot } from "./state.js";
 export type { TensorSnapshot } from "./state.js";
-export { paramArray, stateDictFromJSON } from "./weights.js";
-export type { StateDict } from "./weights.js";
+export { paramArray, stateDictFromBinary, stateDictFromJSON } from "./weights.js";
+export type { StateDict, WeightsManifest } from "./weights.js";
 
 export { LayerModule } from "./modules/module.js";
 export { Linear } from "./modules/linear.js";

@@ -6,11 +6,13 @@ import { TransformerLM } from "../src/modules/transformerLM.js";
 import { stateDictFromJSON } from "../src/weights.js";
 
 /**
- * Cross-language parity: `tests/fixtures/transformer_lm.json` was generated
- * by running spiderman_llm's real (Python) TransformerLM with a fixed seed
- * — see the generation script referenced in the PR/commit that added this
- * fixture. If this test fails, the JS port has diverged from the Python
- * model it's supposed to mirror.
+ * Cross-language parity: `tests/fixtures/transformer_lm.json` is generated
+ * by running spiderman_llm's real (Python) TransformerLM with a fixed seed —
+ * see `llm/src/spiderman_llm/scripts/gen_js_parity_fixture.py` (run via
+ * `uv run python -m spiderman_llm.scripts.gen_js_parity_fixture` from
+ * `llm/`). If this test fails, the JS port has diverged from the Python
+ * model it's supposed to mirror; if you change TransformerLM's config,
+ * re-run that script to refresh the fixture.
  */
 const fixturePath = fileURLToPath(new URL("./fixtures/transformer_lm.json", import.meta.url));
 const fixture = JSON.parse(readFileSync(fixturePath, "utf-8")) as {

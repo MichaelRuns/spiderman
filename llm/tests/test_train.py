@@ -31,7 +31,7 @@ def test_checkpoint_roundtrip(tmp_path):
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
 
     path = tmp_path / "ckpt.pt"
-    save_checkpoint(model, optimizer, iteration=7, path=path)
+    save_checkpoint(model, optimizer, iteration=7, config={"d_model": 32}, path=path)
 
     model2 = TransformerLM(
         vocab_size=50, context_length=16, d_model=32, num_layers=1, num_heads=2, d_ff=64

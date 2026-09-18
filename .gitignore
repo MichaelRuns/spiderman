@@ -8,6 +8,12 @@ __pycache__/
 # uv
 uv.lock.tmp
 
+# Raw/intermediate training data and checkpoints — large, reproducible from a
+# data source + training script, not repo content.
+llm/data/*
+!llm/data/.gitkeep
+llm/checkpoints/
+
 # Node / JS (for the future web/ tooling)
 node_modules/
 dist/
