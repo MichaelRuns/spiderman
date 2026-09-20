@@ -1,5 +1,6 @@
 import { NDArray, add } from "../ndarray.js";
 import { type StateDict } from "../weights.js";
+import type { LayerKVCache } from "../kvcache.js";
 import { MultiHeadSelfAttention } from "./attention.js";
 import { LayerModule } from "./module.js";
 import { RMSNorm } from "./rmsnorm.js";
@@ -27,8 +28,8 @@ export class TransformerBlock extends LayerModule {
     this.ffn.loadWeights(stateDict, `${prefix}ffn.`);
   }
 
-  forward(x: NDArray, tokenPositions?: NDArray): NDArray {
-    const afterAttn = add(x, this.attn.forward(this.ln1.forward(x), tokenPositions));
+  forward(x: NDArray, tokenPositions?: NDArray, layerCache?: LayerKVCache): NDArray {
+    const afterAttn = add(x, this.attn.forward(this.ln1.forward(x), tokenPositions, layerCache));
     const output = add(afterAttn, this.ffn.forward(this.ln2.forward(afterAttn)));
     this.record({ input: x, output });
     return output;

@@ -336,20 +336,64 @@ export function stackLast(a: NDArray, b: NDArray): NDArray {
   return new NDArray([...a.shape, 2], out);
 }
 
-export function arangeArray(n: number): NDArray {
+export function arangeArray(n: number, start = 0): NDArray {
   const data = new Float32Array(n);
-  for (let i = 0; i < n; i++) data[i] = i;
+  for (let i = 0; i < n; i++) data[i] = start + i;
   return new NDArray([n], data);
 }
 
-export function causalMask(seqLen: number): NDArray {
-  const data = new Float32Array(seqLen * seqLen);
-  for (let i = 0; i < seqLen; i++) {
-    for (let j = 0; j < seqLen; j++) {
-      data[i * seqLen + j] = j <= i ? 1 : 0;
+/**
+ * Causal mask for `newLen` new query positions attending over `totalLen`
+ * total (previously-cached + new) key positions: query row `i` (0-indexed
+ * among the new tokens, absolute position `totalLen-newLen+i`) sees key
+ * column `j` iff `j <= totalLen-newLen+i`. Previously-cached positions are
+ * always fully visible (they're in the past); only the new block needs the
+ * usual triangular masking relative to itself.
+ */
+export function causalMaskWithCache(newLen: number, totalLen: number): NDArray {
+  const offset = totalLen - newLen;
+  const data = new Float32Array(newLen * totalLen);
+  for (let i = 0; i < newLen; i++) {
+    for (let j = 0; j < totalLen; j++) {
+      data[i * totalLen + j] = j <= offset + i ? 1 : 0;
     }
   }
-  return new NDArray([seqLen, seqLen], data);
+  return new NDArray([newLen, totalLen], data);
+}
+
+export function causalMask(seqLen: number): NDArray {
+  return causalMaskWithCache(seqLen, seqLen);
+}
+
+/** Concatenate two arrays along one axis; all other axes must match. */
+export function concatAxis(a: NDArray, b: NDArray, axis: number): NDArray {
+  if (a.rank !== b.rank) throw new Error(`concatAxis: rank mismatch ${a.rank} vs ${b.rank}`);
+  const ax = axis < 0 ? a.rank + axis : axis;
+  for (let d = 0; d < a.rank; d++) {
+    if (d !== ax && a.shape[d] !== b.shape[d]) {
+      throw new Error(`concatAxis: shape mismatch outside axis ${ax}: [${a.shape}] vs [${b.shape}]`);
+    }
+  }
+  const outShape = a.shape.map((d, i) => (i === ax ? d + b.shape[i]! : d));
+  const out = new Float32Array(shapeSize(outShape));
+  const outStrides = rowMajorStrides(outShape);
+
+  const copyInto = (src: NDArray, axisOffset: number): void => {
+    const srcStrides = rowMajorStrides(src.shape);
+    for (let linear = 0; linear < src.size; linear++) {
+      let rem = linear;
+      let outOffset = 0;
+      for (let d = 0; d < src.rank; d++) {
+        const coord = Math.floor(rem / srcStrides[d]!);
+        rem -= coord * srcStrides[d]!;
+        outOffset += (d === ax ? coord + axisOffset : coord) * outStrides[d]!;
+      }
+      out[outOffset] = src.data[linear]!;
+    }
+  };
+  copyInto(a, 0);
+  copyInto(b, a.shape[ax]!);
+  return new NDArray(outShape, out);
 }
 
 /** Where mask == 0, replace with `value` (broadcasts like the other binary ops). */

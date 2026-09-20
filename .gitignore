@@ -24,6 +24,10 @@ dist/
 # and stays small (a few MB) by design. Only the training-only intermediates
 # above (checkpoints with optimizer state, raw corpora) are excluded.
 
+# web/visualizer/public/weights/ is a build-time copy of web/weights/ (see
+# scripts/copy-weights.mjs) — don't duplicate the same binary in git twice.
+web/visualizer/public/
+
 # OS / editor
 .DS_Store
 .vscode/
