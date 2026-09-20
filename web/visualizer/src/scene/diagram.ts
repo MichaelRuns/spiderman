@@ -54,15 +54,18 @@ function drawBox(
   ctx.lineWidth = 1;
   ctx.stroke();
 
+  // Narrow boxes (small viewports) get a smaller label font so text is less
+  // likely to spill past the rounded rect than clip/wrap would require.
+  const labelSize = w < 260 ? 10 : 12;
   ctx.fillStyle = INK;
-  ctx.font = "600 12px system-ui, sans-serif";
+  ctx.font = `600 ${labelSize}px system-ui, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillText(label, x + 8, y + 6);
 
   if (sublabel) {
     ctx.fillStyle = MUTED;
-    ctx.font = "10px system-ui, sans-serif";
+    ctx.font = `${labelSize - 2}px system-ui, sans-serif`;
     ctx.fillText(sublabel, x + 8, y + 21);
   }
 }

@@ -7,6 +7,7 @@ body {
   background: #0b0d12;
   color: #e6e8ee;
   font-family: system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
 }
 
 .app {
@@ -89,7 +90,12 @@ h1 {
   gap: 0.25rem;
   font-size: 0.85rem;
   color: #c3c7d3;
-  min-width: 160px;
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.hyperparams input[type="range"] {
+  width: 100%;
 }
 
 .token-strip {
