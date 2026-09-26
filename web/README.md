@@ -39,9 +39,19 @@ builds and deploys on every push to `main`). A pnpm workspace with these package
   tokens visibly appear (real compute is often single-digit ms — too fast
   to watch) without touching the separately-reported real perf stats
   (current/min/avg time per token, tokens/sec, KV cache size).
-- `playground/` — the "module playground": a standalone, graphical
-  explainer for how each module works (RoPE, attention, BPE, ...),
-  independent of running the full model. Not yet implemented.
+- `playground/` — the "module playground": standalone, graphical explainers
+  for individual modules, computed by the real `@spiderman/nn` functions on
+  tiny, fully-editable toy tensors (not a model, and not a reimplementation
+  of the math for illustration). **RoPE**: pick d_k, θ, and a position, edit
+  the input vector, and see every pair's own rotation frequency
+  `θ⁻²ⁱ/ᵈ`, angle, cos/sin, and the before/after vector plotted — the first
+  pair visibly rotates fastest, later pairs progressively slower. **Attention**:
+  a 2-head/3-token/d_k=4 toy example with editable Q/K/V tables and a
+  causal-mask toggle, showing scores → softmax weights (each row sums to 1,
+  verified) → weighted-V output as real computed tables, using
+  `matmul`/`scale`/`softmax`/`scaledDotProductAttention` directly. Not yet
+  wired into the GitHub Pages deploy (currently `visualizer/`-only).
+  Independent of running the full model — no weights loaded.
 - `weights/` — exported weights from `llm/` training runs
   (`llm/src/spiderman_llm/scripts/export_weights.py`): `weights.bin` (raw
   float32, ~8MB) + `manifest.json` + `vocab.json`/`merges.json`, served to

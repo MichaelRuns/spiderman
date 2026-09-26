@@ -8,6 +8,7 @@ import { RoPE } from "../src/modules/rope.js";
 import { SwiGLU } from "../src/modules/swiglu.js";
 import { TransformerBlock } from "../src/modules/transformerBlock.js";
 import { TransformerLM } from "../src/modules/transformerLM.js";
+import type { LayerKVCache } from "../src/kvcache.js";
 import type { StateDict } from "../src/weights.js";
 
 function identityWeight(n: number): { shape: number[]; data: Float32Array } {
@@ -85,6 +86,29 @@ describe("RoPE", () => {
     const rotated = rope.forward(x, positions);
     expect(Array.from(rotated.data)).toEqual(Array.from(x.data));
   });
+
+  it("anglesAt matches the exact cos/sin forward() uses, and reproduces the per-pair rotation by hand", () => {
+    const rope = new RoPE(4, 8, 10000);
+    const position = 3;
+    const { thetaI, angleRad, cos, sin } = rope.anglesAt(position);
+    expect(thetaI).toHaveLength(2); // dK/2
+    expect(angleRad).toEqual(thetaI.map((t) => position * t));
+    // cos/sin come back from a Float32Array table, so compare within float32 precision.
+    angleRad.forEach((a, i) => {
+      expect(cos[i]!).toBeCloseTo(Math.cos(a), 6);
+      expect(sin[i]!).toBeCloseTo(Math.sin(a), 6);
+    });
+
+    // Recompute the rotation by hand from these numbers and check it matches forward().
+    const x = [1, 2, 3, 4];
+    const rotated = rope.forward(NDArray.fromNested([x]), NDArray.fromNested([position]));
+    const expectedPair0 = [x[0]! * cos[0]! - x[1]! * sin[0]!, x[0]! * sin[0]! + x[1]! * cos[0]!];
+    const expectedPair1 = [x[2]! * cos[1]! - x[3]! * sin[1]!, x[2]! * sin[1]! + x[3]! * cos[1]!];
+    const expected = [...expectedPair0, ...expectedPair1];
+    // Both sides round through float32 (the stored cos/sin table, and the ndarray ops
+    // below), but via different intermediate steps, so compare within float32 precision.
+    Array.from(rotated.data).forEach((v, i) => expect(v).toBeCloseTo(expected[i]!, 5));
+  });
 });
 
 describe("MultiHeadSelfAttention", () => {
@@ -126,6 +150,32 @@ describe("MultiHeadSelfAttention", () => {
     const weightsArr = new NDArray(weights.shape, weights.data);
     const rowSums = sumAxis(weightsArr, -1);
     for (const v of rowSums.data) expect(v).toBeCloseTo(1, 5);
+  });
+
+  it("records step-local q/k/v (this call's new tokens only, not the full cached history)", () => {
+    const attn = new MultiHeadSelfAttention(4, 2);
+    attn.loadWeights({
+      "WQ.weight": identityWeight(4),
+      "WK.weight": identityWeight(4),
+      "WV.weight": identityWeight(4),
+      "output_proj.weight": identityWeight(4),
+    });
+    const cache: LayerKVCache = { k: null, v: null };
+
+    attn.forward(NDArray.fromNested([[1, 0, 0, 0]]), undefined, cache);
+    const first = attn.getState();
+    expect(first.q!.shape).toEqual([2, 1, 2]); // [numHeads, newLen, dK]
+    expect(first.k!.shape).toEqual([2, 1, 2]);
+    expect(first.v!.shape).toEqual([2, 1, 2]);
+
+    // A second (decode) step against a now-non-empty cache: q/k/v stay step-local
+    // (newLen=1), even though attnWeights' key axis has grown with the cache.
+    attn.forward(NDArray.fromNested([[0, 1, 0, 0]]), NDArray.fromNested([1]), cache);
+    const second = attn.getState();
+    expect(second.q!.shape).toEqual([2, 1, 2]);
+    expect(second.k!.shape).toEqual([2, 1, 2]);
+    expect(second.v!.shape).toEqual([2, 1, 2]);
+    expect(second.attnWeights!.shape).toEqual([2, 1, 2]); // [numHeads, newLen, totalLen=2]
   });
 });
 

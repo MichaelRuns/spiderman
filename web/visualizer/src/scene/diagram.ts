@@ -1,6 +1,6 @@
 import type { StepSnapshot } from "../inference/snapshot.js";
-import { diverging, rgbToCss, sequentialBlue, sequentialOrange } from "./colors.js";
-import { attentionLastPositionByHead, kvCacheToPositionMajor, lastRow } from "./tensorViews.js";
+import { diverging, rgbToCss, sequentialAqua, sequentialBlue, sequentialOrange } from "./colors.js";
+import { kvCacheToPositionMajor, lastPositionByHead, lastRow } from "./tensorViews.js";
 
 const SURFACE = "#14161d";
 const BORDER = "#2a2e3a";
@@ -149,7 +149,7 @@ export function layoutRows(config: DiagramConfig): { rows: DiagramRow[]; totalHe
   const specs: Array<[string, string, number]> = [
     ["embed", "Input Embedding", 46],
     ["ln1", "RMSNorm", 34],
-    ["attn", "Masked Multi-Head Attention (RoPE)", 130],
+    ["attn", "Masked Multi-Head Attention (RoPE)", 210],
     ["add1", "Add (residual)", 20],
     ["ln2", "RMSNorm", 34],
     ["ffn", "Feed Forward (SwiGLU)", 46],
@@ -204,18 +204,28 @@ export function drawArchitecture(ctx: CanvasRenderingContext2D, options: DrawOpt
 
   const attn = byKey.attn!;
   drawBox(ctx, boxX, attn.y, boxW, 24, attn.label, COLOR.attn);
-  const attnData = layer ? attentionLastPositionByHead(layer.attnWeights) : null;
-  drawGrid(ctx, boxX + 4, attn.y + 28, boxW - 8, 40, attnData, config.numHeads, config.contextLength, sequentialBlue, (v) => v);
   ctx.fillStyle = MUTED;
   ctx.font = "10px system-ui, sans-serif";
-  ctx.fillText("attn: head ↓ · key position →", boxX + 4, attn.y + 70);
+
+  // Q and this step's (pre-cache) K, side by side — the two vectors whose dot
+  // product actually produced the attention weights drawn just below, as
+  // opposed to K's full cached history shown further down.
+  const qData = layer ? lastPositionByHead(layer.q) : null;
+  const stepKData = layer ? lastPositionByHead(layer.k) : null;
+  drawGrid(ctx, boxX + 4, attn.y + 28, boxW - 8, 24, qData, config.numHeads, config.dK, sequentialAqua, normalizeMagnitude);
+  ctx.fillText("Q: head ↓ · dim →", boxX + 4, attn.y + 56);
+  drawGrid(ctx, boxX + 4, attn.y + 70, boxW - 8, 24, stepKData, config.numHeads, config.dK, sequentialBlue, normalizeMagnitude);
+  ctx.fillText("K this step: head ↓ · dim →", boxX + 4, attn.y + 98);
+
+  const attnData = layer ? lastPositionByHead(layer.attnWeights) : null;
+  drawGrid(ctx, boxX + 4, attn.y + 112, boxW - 8, 40, attnData, config.numHeads, config.contextLength, sequentialBlue, (v) => v);
+  ctx.fillText("attn = softmax(Q·Kᵀ): head ↓ · key position →", boxX + 4, attn.y + 156);
 
   const kCache = step ? kvCacheToPositionMajor(step.kvCacheK[selectedLayer] ?? null) : null;
   const vCache = step ? kvCacheToPositionMajor(step.kvCacheV[selectedLayer] ?? null) : null;
-  drawStrip(ctx, boxX + 4, attn.y + 86, boxW - 8, 10, kCache, sequentialBlue, normalizeMagnitude);
-  drawStrip(ctx, boxX + 4, attn.y + 98, boxW - 8, 10, vCache, sequentialOrange, normalizeMagnitude);
-  ctx.fillStyle = MUTED;
-  ctx.fillText("K (blue) / V (orange) cache, by position", boxX + 4, attn.y + 112);
+  drawStrip(ctx, boxX + 4, attn.y + 170, boxW - 8, 10, kCache, sequentialBlue, normalizeMagnitude);
+  drawStrip(ctx, boxX + 4, attn.y + 182, boxW - 8, 10, vCache, sequentialOrange, normalizeMagnitude);
+  ctx.fillText("K (blue) / V (orange) cache, by position", boxX + 4, attn.y + 196);
 
   const add1 = byKey.add1!;
   drawBox(ctx, midX - 30, add1.y, 60, add1.height, "+", COLOR.norm);
