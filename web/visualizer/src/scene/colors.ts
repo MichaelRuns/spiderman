@@ -1,10 +1,11 @@
 /**
- * Colormaps for the 3D visualization, built from the dataviz skill's
- * validated palette (references/palette.md): a single sequential hue for
- * true magnitude (attention weights, K in the KV cache), a second
- * sequential hue for a second simultaneous magnitude context (V in the KV
- * cache — "the second takes the next categorical slot's hue"), and the
- * diverging blue<->red pair with a gray midpoint for signed activations.
+ * Colormaps for the visualization, built from the dataviz skill's validated
+ * palette (references/palette.md): a single sequential hue for true
+ * magnitude (attention weights, K in the KV cache), a second sequential hue
+ * for a second simultaneous magnitude context (V in the KV cache — "the
+ * second takes the next categorical slot's hue"), a third (categorical slot
+ * 3, aqua) for a third simultaneous context (Q), and the diverging
+ * blue<->red pair with a gray midpoint for signed activations.
  */
 
 interface RampStop {
@@ -25,6 +26,12 @@ const BLUE_RAMP: RampStop[] = [
 
 // Sequential orange (categorical slot 2), a matching light->dark ramp for the "second context."
 const ORANGE_RAMP: RampStop[] = ["#fbe3d5", "#f5b998", "#eb6834", "#c04f22", "#8f3a19"].map((hex, i, arr) => ({
+  t: i / (arr.length - 1),
+  rgb: hexToRgb(hex),
+}));
+
+// Sequential aqua (categorical slot 3), for a third simultaneous context (Q).
+const AQUA_RAMP: RampStop[] = ["#d3f5e9", "#8fe0c4", "#1baf7a", "#12805a", "#0c5c40"].map((hex, i, arr) => ({
   t: i / (arr.length - 1),
   rgb: hexToRgb(hex),
 }));
@@ -62,6 +69,11 @@ export function sequentialBlue(magnitude: number): [number, number, number] {
 /** Magnitude in [0,1] -> RGB via the sequential orange ramp (V, "the second context"). */
 export function sequentialOrange(magnitude: number): [number, number, number] {
   return sampleRamp(ORANGE_RAMP, magnitude);
+}
+
+/** Magnitude in [0,1] -> RGB via the sequential aqua ramp (Q, "the third context"). */
+export function sequentialAqua(magnitude: number): [number, number, number] {
+  return sampleRamp(AQUA_RAMP, magnitude);
 }
 
 /** Signed value, normalized to roughly [-1,1] -> RGB via the diverging blue<->red pair. */

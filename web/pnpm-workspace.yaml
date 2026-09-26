@@ -1,6 +1,6 @@
 packages:
   - "nn"
   - "visualizer"
-  # playground/ joins once it has its own package.json
+  - "playground"
 allowBuilds:
   esbuild: true

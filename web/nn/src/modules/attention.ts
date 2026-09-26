@@ -55,6 +55,13 @@ export class MultiHeadSelfAttention extends LayerModule {
       K = this.rope.forward(K, positions);
     }
 
+    // Step-local (this call's new tokens only, post-RoPE for Q/K) — captured before the
+    // cache concat below, so this is exactly the Q/K/V that produced `weights` this step,
+    // not the full cached history (see LayerSnapshot in snapshot.ts for that separately).
+    const stepQ = Q;
+    const stepK = K;
+    const stepV = V;
+
     if (cache) {
       K = cache.k ? concatAxis(cache.k, K, K.rank - 2) : K;
       V = cache.v ? concatAxis(cache.v, V, V.rank - 2) : V;
@@ -70,7 +77,7 @@ export class MultiHeadSelfAttention extends LayerModule {
 
     // `attnWeights`: [..., numHeads, newLen, totalLen] — the classic per-head attention
     // heatmap. With a cache this is only the new rows, not the full seq x seq matrix.
-    this.record({ input: x, attnWeights: weights, output });
+    this.record({ input: x, q: stepQ, k: stepK, v: stepV, attnWeights: weights, output });
     return output;
   }
 }

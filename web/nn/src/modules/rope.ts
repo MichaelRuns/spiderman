@@ -31,6 +31,29 @@ export class RoPE extends LayerModule {
   // RoPE has no learned parameters — cos/sin tables are derived from `theta` at construction.
   loadWeights(): void {}
 
+  /**
+   * Per-pair rotation angle/cos/sin at a given position — the same numbers
+   * `forward()` uses internally (read straight out of the precomputed
+   * tables), exposed for callers that want to show the actual math rather
+   * than just its result (e.g. a RoPE explainer). `thetaI[i]` is
+   * `theta^(-2i/dK)`, so `angleRad[i] = position * thetaI[i]`.
+   */
+  anglesAt(position: number): { thetaI: number[]; angleRad: number[]; cos: number[]; sin: number[] } {
+    const half = this.dK / 2;
+    const thetaI: number[] = [];
+    const angleRad: number[] = [];
+    const cos: number[] = [];
+    const sin: number[] = [];
+    for (let i = 0; i < half; i++) {
+      const freq = 1 / Math.pow(this.theta, (2 * i) / this.dK);
+      thetaI.push(freq);
+      angleRad.push(position * freq);
+      cos.push(this.cosTable.data[position * half + i]!);
+      sin.push(this.sinTable.data[position * half + i]!);
+    }
+    return { thetaI, angleRad, cos, sin };
+  }
+
   forward(x: NDArray, positions: NDArray): NDArray {
     const cos = gather(this.cosTable, positions); // [seq, dK/2], broadcasts over leading dims
     const sin = gather(this.sinTable, positions);

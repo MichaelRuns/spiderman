@@ -7,16 +7,17 @@ export function lastRow(snapshot: TensorSnapshot): Float32Array {
 }
 
 /**
- * attnWeights: [numHeads, newLen, totalLen] -> [numHeads, totalLen], keeping
- * only the most recent query position's row per head (uniform across both
- * the prefill step, where newLen>1, and decode steps, where newLen===1).
+ * Any [numHeads, newLen, X] per-head tensor -> [numHeads, X], keeping only
+ * the most recent position per head (uniform across both the prefill step,
+ * where newLen>1, and decode steps, where newLen===1). Used for attention
+ * weights (X=totalLen) as well as the step-local q/k/v (X=dK).
  */
-export function attentionLastPositionByHead(snapshot: TensorSnapshot): Float32Array {
-  const [numHeads, newLen, totalLen] = snapshot.shape as [number, number, number];
-  const out = new Float32Array(numHeads * totalLen);
+export function lastPositionByHead(snapshot: TensorSnapshot): Float32Array {
+  const [numHeads, newLen, x] = snapshot.shape as [number, number, number];
+  const out = new Float32Array(numHeads * x);
   for (let h = 0; h < numHeads; h++) {
-    const headBase = h * newLen * totalLen + (newLen - 1) * totalLen;
-    out.set(snapshot.data.subarray(headBase, headBase + totalLen), h * totalLen);
+    const headBase = h * newLen * x + (newLen - 1) * x;
+    out.set(snapshot.data.subarray(headBase, headBase + x), h * x);
   }
   return out;
 }
