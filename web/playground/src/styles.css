@@ -251,3 +251,135 @@ code {
   outline: 1px solid #5b6cff;
   border-radius: 3px;
 }
+
+/* BPE explainer */
+.bpe-text-label {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bpe-text-input {
+  width: 100%;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.bpe-chunks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 14px 0 4px;
+}
+
+.chip {
+  font: inherit;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  padding: 4px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 999px;
+  background: #fafafa;
+  cursor: pointer;
+}
+
+.chip.active {
+  border-color: #5b6cff;
+  background: #eef0ff;
+}
+
+.bpe-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.bpe-step {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bpe-step-label {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #888;
+  min-width: 64px;
+}
+
+.bpe-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.token-chip {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  padding: 3px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #f7f7f7;
+}
+
+.token-chip.merged-new {
+  border-color: #5b6cff;
+  background: #eef0ff;
+  font-weight: 600;
+}
+
+.token-id {
+  color: #888;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+.bpe-merge-note {
+  font-size: 13px;
+  color: #555;
+}
+
+.bpe-merge-note code {
+  font-family: ui-monospace, monospace;
+  background: #f0f0f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.bpe-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fcfcfc;
+}
+
+.bpe-decode-note {
+  font-size: 13px;
+  color: #555;
+  margin-left: 8px;
+}
+
+.bpe-subhead {
+  margin: 28px 0 4px;
+  font-size: 16px;
+}
+
+.bpe-merges-table {
+  margin-top: 8px;
+}
+
+.bpe-merges-table code {
+  font-family: ui-monospace, monospace;
+}

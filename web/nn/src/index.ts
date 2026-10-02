@@ -33,6 +33,7 @@ export type { LayerKVCache } from "./kvcache.js";
 export { sampleToken } from "./sampling.js";
 export type { SamplingOptions } from "./sampling.js";
 export { Tokenizer } from "./tokenizer.js";
+export type { BpeMergeStep } from "./tokenizer.js";
 
 export { LayerModule } from "./modules/module.js";
 export { Linear } from "./modules/linear.js";

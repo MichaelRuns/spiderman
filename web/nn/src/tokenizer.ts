@@ -37,6 +37,15 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+export interface BpeMergeStep {
+  /** The token parts (byte-strings) after this step. */
+  parts: string[];
+  /** The pair merged to reach this step; `null` for the initial byte split. */
+  merged: [string, string] | null;
+  /** Rank of `merged` in the learned merge list; `null` for the initial state. */
+  rank: number | null;
+}
+
 export class Tokenizer {
   private readonly vocab: Map<number, string>;
   private readonly tokenToId: Map<string, number>;
@@ -102,7 +111,41 @@ export class Tokenizer {
   }
 
   private encodePretoken(pretoken: string): number[] {
+    const steps = this.traceMerges(pretoken);
+    const parts = steps[steps.length - 1]!.parts;
+    return parts.map((part) => {
+      const id = this.tokenToId.get(part);
+      if (id === undefined) throw new Error("Tokenizer: no vocab id for an encoded byte sequence");
+      return id;
+    });
+  }
+
+  /**
+   * Split text into pretoken chunks (the GPT-2 pretokenizer regex), without
+   * encoding them — the chunks BPE operates on independently.
+   */
+  pretokenize(text: string): string[] {
+    const chunks: string[] = [];
+    for (const [chunk, isSpecial] of this.splitOnSpecials(text)) {
+      if (isSpecial) {
+        chunks.push(chunk);
+        continue;
+      }
+      for (const match of chunk.matchAll(PRETOKENIZE_PATTERN)) chunks.push(match[0]);
+    }
+    return chunks;
+  }
+
+  /**
+   * Replay BPE on a single pretoken chunk, returning the initial byte split
+   * plus one entry per merge applied (lowest merge rank first). Lets callers
+   * show exactly which pair merged at each step and why — the merge loop is
+   * shared with {@link encodePretoken}, so the trace always matches encoding.
+   */
+  traceMerges(pretoken: string): BpeMergeStep[] {
+    const steps: BpeMergeStep[] = [];
     let parts = Array.from(new TextEncoder().encode(pretoken), (b) => String.fromCharCode(b));
+    steps.push({ parts: [...parts], merged: null, rank: null });
     while (parts.length > 1) {
       let bestRank = Infinity;
       let bestIdx = -1;
@@ -114,14 +157,11 @@ export class Tokenizer {
         }
       }
       if (bestIdx === -1) break;
-      const merged = parts[bestIdx]! + parts[bestIdx + 1]!;
-      parts = [...parts.slice(0, bestIdx), merged, ...parts.slice(bestIdx + 2)];
+      const merged: [string, string] = [parts[bestIdx]!, parts[bestIdx + 1]!];
+      parts = [...parts.slice(0, bestIdx), merged[0] + merged[1], ...parts.slice(bestIdx + 2)];
+      steps.push({ parts: [...parts], merged, rank: bestRank });
     }
-    return parts.map((part) => {
-      const id = this.tokenToId.get(part);
-      if (id === undefined) throw new Error("Tokenizer: no vocab id for an encoded byte sequence");
-      return id;
-    });
+    return steps;
   }
 
   encode(text: string): number[] {
