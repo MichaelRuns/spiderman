@@ -44,6 +44,9 @@ def export_weights(
 ) -> None:
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
     state_dict = checkpoint["model"]
+    # Older checkpoints saved from a torch.compile'd run carry `_orig_mod.`
+    # prefixes; strip them so exported tensor names match the model.
+    state_dict = {k.removeprefix("_orig_mod."): v for k, v in state_dict.items()}
     config = checkpoint.get("config")
     if config is None:
         raise ValueError(
