@@ -71,10 +71,19 @@ def lr_cosine_schedule(
     return min_lr + 0.5 * (1 + math.cos(math.pi * progress)) * (max_lr - min_lr)
 
 
+def _raw_module(model):
+    """Unwrap a torch.compile'd module so checkpoints use clean key names."""
+    return getattr(model, "_orig_mod", model)
+
+
+def _strip_orig_mod_prefix(state_dict: dict) -> dict:
+    return {k.removeprefix("_orig_mod."): v for k, v in state_dict.items()}
+
+
 def save_checkpoint(model, optimizer, iteration: int, config: dict, path: Path) -> None:
     torch.save(
         {
-            "model": model.state_dict(),
+            "model": _raw_module(model).state_dict(),
             "optimizer": optimizer.state_dict(),
             "iteration": iteration,
             "config": config,
@@ -85,26 +94,46 @@ def save_checkpoint(model, optimizer, iteration: int, config: dict, path: Path) 
 
 def load_checkpoint(path: Path, model, optimizer) -> int:
     checkpoint = torch.load(path, map_location="cpu")
-    model.load_state_dict(checkpoint["model"])
+    _raw_module(model).load_state_dict(_strip_orig_mod_prefix(checkpoint["model"]))
     optimizer.load_state_dict(checkpoint["optimizer"])
     return checkpoint["iteration"]
 
 
 @torch.no_grad()
-def estimate_val_loss(model, val_data: np.ndarray, args: argparse.Namespace, device: str) -> float:
+def estimate_val_loss(
+    model, val_data: np.ndarray, args: argparse.Namespace, device: str
+) -> float:
     model.eval()
     losses = []
     for _ in range(args.eval_iters):
         x, y = get_batch(val_data, args.batch_size, args.context_length, device)
-        logits = model(x)
+        with maybe_autocast(device, args.amp):
+            logits = model(x)
         losses.append(cross_entropy(logits, y).item())
     model.train()
     return sum(losses) / len(losses)
 
 
+def maybe_autocast(device: str, enabled: bool):
+    """No-op context manager unless AMP is enabled."""
+    import contextlib
+
+    if not enabled:
+        return contextlib.nullcontext()
+    device_type = device if device in ("cuda", "cpu", "mps") else "cpu"
+    return torch.autocast(device_type, dtype=torch.bfloat16)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, required=True, help="Path to a plain-text training corpus.")
+    parser.add_argument("--input", type=Path, default=None, help="Path to a plain-text training corpus.")
+    parser.add_argument(
+        "--tokenized-input",
+        type=Path,
+        default=None,
+        help="Path to a .npy of pre-tokenized int64 ids (memory-mapped, see "
+        "scripts/tokenize_to_npy.py); skips text tokenization when given.",
+    )
     parser.add_argument("--checkpoint-dir", type=Path, default=Path("checkpoints"))
     parser.add_argument("--resume-from", type=Path, default=None)
 
@@ -138,12 +167,24 @@ def parse_args() -> argparse.Namespace:
     train_group.add_argument("--checkpoint-every", type=int, default=500)
     train_group.add_argument("--device", type=str, default=None)
     train_group.add_argument("--seed", type=int, default=0)
+    train_group.add_argument(
+        "--torch-compile",
+        action="store_true",
+        help="Wrap the model with torch.compile (faster on both CPU and CUDA).",
+    )
+    train_group.add_argument(
+        "--amp",
+        action="store_true",
+        help="Run the forward pass under bfloat16 autocast (master weights stay float32).",
+    )
 
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.input is None and args.tokenized_input is None:
+        raise SystemExit("error: one of --input or --tokenized-input is required")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
@@ -151,7 +192,11 @@ def main() -> None:
     args.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     tokenizer = get_or_train_tokenizer(args)
-    data = tokenize_corpus(tokenizer, args.input)
+    if args.tokenized_input:
+        data = np.load(args.tokenized_input, mmap_mode="r")
+        print(f"Loaded {len(data)} pre-tokenized ids from {args.tokenized_input} (mmap)")
+    else:
+        data = tokenize_corpus(tokenizer, args.input)
     if len(data) < args.context_length + 1:
         raise ValueError(
             f"Corpus has only {len(data)} tokens, need at least {args.context_length + 1}."
@@ -173,6 +218,9 @@ def main() -> None:
         "theta": args.rope_theta,
     }
     model = TransformerLM(**model_config).to(device)
+    if args.torch_compile:
+        model = torch.compile(model)
+        print("Wrapped model with torch.compile")
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.max_lr, weight_decay=args.weight_decay)
 
     start_iter = 0
@@ -189,8 +237,9 @@ def main() -> None:
             group["lr"] = lr
 
         x, y = get_batch(train_data, args.batch_size, args.context_length, device)
-        logits = model(x)
-        loss = cross_entropy(logits, y)
+        with maybe_autocast(device, args.amp):
+            logits = model(x)
+            loss = cross_entropy(logits, y)
 
         optimizer.zero_grad(set_to_none=True)
         loss.backward()

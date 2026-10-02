@@ -119,5 +119,5 @@ describe("KV-cached incremental generation matches full-sequence recompute", () 
     expect(cache.length).toBe(manifest.config.contextLength);
     // ...but one beyond that must throw, not silently corrupt via out-of-range RoPE lookups.
     expect(() => model.forward(NDArray.fromNested([1]), cache)).toThrow(/contextLength/);
-  });
+  }, 120_000); // 255-token prefill on the full model is slow in pure JS
 });

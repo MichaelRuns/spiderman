@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { AttentionStepThrough } from "./attention/AttentionStepThrough.js";
+import { BpeExplainer } from "./bpe/BpeExplainer.js";
 import { RopeExplainer } from "./rope/RopeExplainer.js";
 
-type Tab = "rope" | "attention";
+type Tab = "bpe" | "rope" | "attention";
 
 export function App() {
-  const [tab, setTab] = useState<Tab>("rope");
+  const [tab, setTab] = useState<Tab>("bpe");
 
   return (
     <main className="app">
@@ -18,6 +19,13 @@ export function App() {
       </header>
 
       <div className="tabs">
+        <button
+          type="button"
+          className={tab === "bpe" ? "tab active" : "tab"}
+          onClick={() => setTab("bpe")}
+        >
+          BPE
+        </button>
         <button type="button" className={tab === "rope" ? "tab active" : "tab"} onClick={() => setTab("rope")}>
           RoPE
         </button>
@@ -30,7 +38,7 @@ export function App() {
         </button>
       </div>
 
-      {tab === "rope" ? <RopeExplainer /> : <AttentionStepThrough />}
+      {tab === "bpe" ? <BpeExplainer /> : tab === "rope" ? <RopeExplainer /> : <AttentionStepThrough />}
     </main>
   );
 }

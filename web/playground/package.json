@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Standalone, graphical explainers for individual model modules (RoPE, attention) using the real @spiderman/nn math on tiny, fully-visible tensors — independent of running the full model.",
+  "description": "Standalone, graphical explainers for individual model modules (BPE, RoPE, attention) using the real @spiderman/nn math on tiny, fully-visible tensors \u2014 independent of running the full model.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

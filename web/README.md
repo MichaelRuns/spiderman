@@ -42,7 +42,10 @@ builds and deploys on every push to `main`). A pnpm workspace with these package
 - `playground/` — the "module playground": standalone, graphical explainers
   for individual modules, computed by the real `@spiderman/nn` functions on
   tiny, fully-editable toy tensors (not a model, and not a reimplementation
-  of the math for illustration). **RoPE**: pick d_k, θ, and a position, edit
+  of the math for illustration). **BPE**: type any text, pick a pretoken chunk,
+  and watch the merge loop replay step by step — every pair merged in rank
+  order with the real learned merges, ending in the actual token ids — plus
+  the first merges the learner found, ranked. **RoPE**: pick d_k, θ, and a position, edit
   the input vector, and see every pair's own rotation frequency
   `θ⁻²ⁱ/ᵈ`, angle, cos/sin, and the before/after vector plotted — the first
   pair visibly rotates fastest, later pairs progressively slower. **Attention**:
@@ -51,7 +54,8 @@ builds and deploys on every push to `main`). A pnpm workspace with these package
   verified) → weighted-V output as real computed tables, using
   `matmul`/`scale`/`softmax`/`scaledDotProductAttention` directly. Not yet
   wired into the GitHub Pages deploy (currently `visualizer/`-only).
-  Independent of running the full model — no weights loaded.
+  Independent of running the full model — no model weights loaded (the BPE
+  tab reads only the tokenizer's vocab/merges JSON).
 - `weights/` — exported weights from `llm/` training runs
   (`llm/src/spiderman_llm/scripts/export_weights.py`): `weights.bin` (raw
   float32, ~8MB) + `manifest.json` + `vocab.json`/`merges.json`, served to
